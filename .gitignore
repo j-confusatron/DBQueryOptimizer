@@ -5,6 +5,7 @@
 
 src/models/*
 src/queries/*
+src/.vscode/
 
 # User-specific files
 *.rsuser
