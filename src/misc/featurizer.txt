@@ -1,0 +1,18 @@
+1. Roll leaves up to parent if parent is Other
+	parent takes node type and node type id from child,
+	retains cost and rows
+
+Per node:
+	classify node type
+	node type id
+	left child depth = num descendents on left branch
+	has right child (child that is always depth = 1)
+	right node type
+	right node type id
+	right total cost
+	right plan rows
+	total cost
+	plan rows
+
+feature vector len =  NumFeatures * SupportedDepth
+populated 
