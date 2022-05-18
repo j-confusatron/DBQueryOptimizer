@@ -1,6 +1,7 @@
 import featurizer
 import model
 import obs_store
+import json
 
 class QueryHandler():
 
@@ -8,13 +9,14 @@ class QueryHandler():
         self.model = model.Model('500_0.0001_32_lstm2x.pt')
         self.obs_store = obs_store.ObservationStore()
 
-    def select_plan(self, messages):
+    def select_plan(self, messages, debug=False):
         *plans, buffers = messages
+        if debug:
+            plans = plans[0]
         f_plan = featurizer.featurize(plans, buffers)
-        i_plan = self.model.select_plan(f_plan)
+        i_plan, method = self.model.select_plan(f_plan)
         self.obs_store.stage(f_plan, i_plan)
-        #self.obs_store.stage(f_plan, i_plan, self.gen_buffer_key(buffers))
-        print("Selected=%d" % (i_plan))
+        print("Selected=%d (%s)" % (i_plan, method))
         return i_plan
 
     def predict(self, messages):
@@ -32,10 +34,19 @@ class QueryHandler():
     def store(self, plan, buffers, obs_reward):
         reward = obs_reward['reward']
         self.obs_store.record(reward)
-        #self.obs_store.record(reward, self.gen_buffer_key(buffers))
         print("Reward=%f" % (reward))
         return
 
     def gen_buffer_key(self, buffers):
         print(buffers)
         return str(buffers['question_pkey'])+'.'+str(buffers['question'])
+
+
+# Debug
+if __name__ == '__main__':
+    with open('misc/plan.json', 'r') as fp:
+        plans = json.load(fp)
+    with open('misc/buffer.json', 'r') as fp:
+        buffers = json.load(fp)
+    qh = QueryHandler()
+    i_plan = qh.select_plan((plans, buffers), debug=True)

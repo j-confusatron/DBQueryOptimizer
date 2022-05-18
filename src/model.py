@@ -140,17 +140,20 @@ class Model():
         
     def select_plan(self, plan):
         if self.force_arm > -1:
+            method = 'force'
             y = self.force_arm
 
         elif random.random() > self.epsilon:
-            x = torch.unsqueeze(torch.tensor(plan), 0)
+            method = 'inference'
+            x = torch.unsqueeze(torch.tensor(plan), 1)
             y, h_c = self.model(x)
-            y = torch.argmax(y, 1).item()
+            y = torch.argmin(y, 1).item()
 
         else:
+            method = 'random'
             y = random.randrange(NUM_PLANS)
 
-        return y
+        return y, method
 
     def predict(self, plan):
         # Not currently used.
