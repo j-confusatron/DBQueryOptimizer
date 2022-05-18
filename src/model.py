@@ -131,7 +131,7 @@ class Model():
 
         m_path = os.path.join('models', model_name)
         if os.path.exists(m_path):
-            self.model.load_state_dict(torch.load(m_path))
+            self.model.load_state_dict(torch.load(m_path, map_location=torch.device('cpu')))
 
         self.model.eval()
     
