@@ -132,6 +132,7 @@ class Model():
         m_path = os.path.join('models', model_name)
         if os.path.exists(m_path):
             self.model.load_state_dict(torch.load(m_path, map_location=torch.device('cpu')))
+            print("Model loaded from disk: %s" % (m_path))
 
         self.model.eval()
     
