@@ -10,26 +10,28 @@ import multiprocessing
 def build_query_list():
     queries = []
 
-    query_directory = os.path.join('queries', 'imdb')
-    #sub_directories = os.listdir(query_directory)
-    sql_files = os.listdir(query_directory)
+    query_directory = os.path.join('queries', 'so_queries')
+    subs = os.listdir(query_directory)
 
-    for s_file in sql_files:
+    # IMDB
+    """for s_file in subs:
         s_file = os.path.join(query_directory, s_file)
         with open(s_file, 'r', encoding="utf8") as sql_file:
             sql = sql_file.read()
-            queries.append(sql)
+            queries.append(sql)"""
 
-    """for dir in sub_directories:
+    # SO
+    for dir in subs:
         sub_dir = os.path.join(query_directory, dir)
         sql_files = os.listdir(sub_dir)
 
         for s_file in sql_files:
             with open(os.path.join(sub_dir, s_file), 'r', encoding="utf8") as sql_file:
                 sql = sql_file.read()
-                queries.append(sql)"""
+                queries.append(sql.strip())
 
     #random.shuffle(queries)
+    #queries = queries[:100]
     return queries
 
 
@@ -58,7 +60,7 @@ def run_queries(query_list, threads=2, increment=2):
     # Enable Bao
     cursor = conn.cursor()
     cursor.execute("set enable_bao to on;")
-    cursor.execute("set bao_host to \"localhost\";")
+    #cursor.execute("set bao_host to \"localhost\";")
     conn.commit()
     #time.sleep(5)
 
@@ -74,8 +76,8 @@ def run_queries(query_list, threads=2, increment=2):
     print("Queries complete! Shutting down. Time: %ds" % (time.time()-start))
 
     # Close the database connection.
-    time.sleep(10)
     conn.commit()
+    time.sleep(5)
     conn.close()
 
 

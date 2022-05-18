@@ -142,7 +142,7 @@ class Model():
         if self.force_arm > -1:
             y = self.force_arm
 
-        elif random.random() < self.epsilon:
+        elif random.random() > self.epsilon:
             x = torch.unsqueeze(torch.tensor(plan), 0)
             y, h_c = self.model(x)
             y = torch.argmax(y, 1).item()
