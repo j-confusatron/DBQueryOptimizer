@@ -14,6 +14,7 @@ class QueryHandler():
         i_plan = self.model.select_plan(f_plan)
         self.obs_store.stage(f_plan, i_plan)
         #self.obs_store.stage(f_plan, i_plan, self.gen_buffer_key(buffers))
+        print("Selected=%d" % (i_plan))
         return i_plan
 
     def predict(self, messages):
