@@ -5,6 +5,9 @@
 
 src/models/*.pt
 *.sql
+*.png
+*.pt
+src/data/*.json
 src/.vscode
 
 # User-specific files

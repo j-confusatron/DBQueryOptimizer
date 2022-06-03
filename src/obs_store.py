@@ -20,11 +20,12 @@ class ObservationStore():
         #self.stage_buffer[key] = (state, action)
 
     def record(self, reward, key=None):
-        state, action = self.stage_last#self.stage_buffer.pop(key)
-        self.buffer[self.i_buffer] = {'x': state, 'a': action, 'y': reward}
-        self.i_buffer += 1
-        if self.i_buffer >= self.flush_after:
-            self.flush_buffer()
+        if self.stage_last:
+            state, action = self.stage_last#self.stage_buffer.pop(key)
+            self.buffer[self.i_buffer] = {'x': state, 'a': action, 'y': reward}
+            self.i_buffer += 1
+            if self.i_buffer >= self.flush_after:
+                self.flush_buffer()
 
     def flush_buffer(self):
         with open(self.f_name, 'a') as f_train:

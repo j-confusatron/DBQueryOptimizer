@@ -49,18 +49,18 @@ def viz_loss(train_loss, val_loss, viz_filepath=None, show_loss=False):
     plt.plot(epochs, train_loss, label='Train Loss')
     plt.plot(epochs, val_loss, label='Validate Loss')
     plt.title('Loss (Train vs Validate)')
+    plt.title('Loss')
     plt.legend()
     if viz_filepath:
         plt.savefig(viz_filepath)
-        print('viz saved to {}'.format(viz_filepath))
     if show_loss:
         plt.show()
     plt.clf()
 
-def train_model(device, c_net, c_optimizer, c_loss_func, train_ds, validate_ds, hyperparameters):
+def train_model(device, c_net, c_optimizer, c_loss_func, train_ds, validate_ds, hyperparameters, m_dir):
     # Setup the train and validate data loaders.
     train = DataLoader(train_ds, hyperparameters['batch_size'], shuffle=True, collate_fn=collate_fn_pad)
-    validate = DataLoader(validate_ds, int(hyperparameters['batch_size']/8), shuffle=True, collate_fn=collate_fn_pad)
+    validate = DataLoader(validate_ds, 1, shuffle=True, collate_fn=collate_fn_pad)
 
     # Create the model, loss, and optimizer.
     net = c_net(model.NUM_FEATURES, model.NUM_PLANS).to(device)
@@ -71,7 +71,6 @@ def train_model(device, c_net, c_optimizer, c_loss_func, train_ds, validate_ds, 
     train_loss = []
     validate_loss = []
     lowest_loss = None
-    m_name = d_serialize(hyperparameters)
     for epoch in tqdm(range(hyperparameters['n_epochs'])):
 
         # Train the model.
@@ -95,7 +94,7 @@ def train_model(device, c_net, c_optimizer, c_loss_func, train_ds, validate_ds, 
         with torch.no_grad():
             net.eval()
             loss_sum = 0.0
-            for batch_idx, data in enumerate(train):
+            for batch_idx, data in enumerate(validate):
                 x, a, y = data
                 x = x.to(device)
                 a = a.to(device)
@@ -107,30 +106,32 @@ def train_model(device, c_net, c_optimizer, c_loss_func, train_ds, validate_ds, 
             validate_loss.append(loss_sum / (batch_idx+1))
 
         # Save off the model, if it is currently best and we're in the home stretch.
-        if (hyperparameters['n_epochs'] - epoch) < 100:
+        if (hyperparameters['n_epochs'] - epoch) < hyperparameters['home_stretch']:
             if lowest_loss is None or lowest_loss > train_loss[-1]:
-                torch.save(net.state_dict(), os.path.join('models', m_name+'.pt'))
+                torch.save(net.state_dict(), os.path.join(m_dir, 'model.pt'))
                 lowest_loss = train_loss[-1]
 
     # Log model loss.
-    train_loss = moving_average(train_loss, window_size=100)
-    validate_loss = moving_average(validate_loss, window_size=100)
-    viz_loss(train_loss, validate_loss, viz_filepath=os.path.join('models', m_name+'loss.png'))
+    train_loss = moving_average(train_loss, window_size=1)
+    validate_loss = moving_average(validate_loss, window_size=1)
+    viz_loss(train_loss, validate_loss, viz_filepath=os.path.join(m_dir, 'loss.png'))
 
 def init_training():
     train_ds = SqlDataset(os.path.join('data', 'tr_data.json'))
     validate_ds = SqlDataset(os.path.join('data', 'val_data.json'))
-    test_ds = SqlDataset(os.path.join('data', 'test_data.json'))
     hyperparameters = list(product_dict(**get_hyperparameters()))
     net = model.Lstm2XNetwork
+    n_net = 'Lstm2XNetwork'
     loss_func = torch.nn.MSELoss
     optimizer = torch.optim.AdamW
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Device: {device.type}")
     
     for i, h in enumerate(hyperparameters):
+        m_dir = os.path.join('models', n_net, d_serialize(h))
+        os.makedirs(m_dir, exist_ok=True)
         print(f"{i+1}/{len(hyperparameters)}: Model n_epochs={h['n_epochs']} lr={h['lr']} batch_size={h['batch_size']}")
-        train_model(device, net, optimizer, loss_func, train_ds, validate_ds, h)
+        train_model(device, net, optimizer, loss_func, train_ds, validate_ds, h, m_dir)
     
 def product_dict(**kwargs):
     keys = kwargs.keys()
@@ -146,9 +147,10 @@ def d_serialize(d):
 
 def get_hyperparameters():
     return {
-        'n_epochs': [500],
-        'lr': [0.0001],
-        'batch_size': [32]
+        'n_epochs': [5000],#500
+        'lr': [0.01],
+        'batch_size': [32],
+        'home_stretch': [50]
     }
 
 if __name__ == '__main__':

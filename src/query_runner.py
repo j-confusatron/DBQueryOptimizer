@@ -4,44 +4,63 @@ import psycopg2
 import configparser
 import time
 from tqdm import tqdm
-import multiprocessing
+import argparse
 
 
-def build_query_list():
+def build_query_list(dataset, shuffle=False):
     queries = []
 
-    query_directory = os.path.join('queries', 'so_queries')
+    # Get the root query directory.
+    if dataset == 'imdb-test':
+        query_directory = os.path.join('queries', 'imdb', 'test')
+    elif dataset == 'imdb-train':
+        query_directory = os.path.join('queries', 'imdb', 'train')
+    else:
+        query_directory = os.path.join('queries', 'so_queries')
     subs = os.listdir(query_directory)
 
     # IMDB
-    """for s_file in subs:
-        s_file = os.path.join(query_directory, s_file)
-        with open(s_file, 'r', encoding="utf8") as sql_file:
-            sql = sql_file.read()
-            queries.append(sql)"""
+    if dataset == 'imdb-test' or dataset == 'imdb-train':
+        for s_file in subs:
+            s_file = os.path.join(query_directory, s_file)
+            with open(s_file, 'r', encoding="utf8") as sql_file:
+                sql = sql_file.read()
+                queries.append(sql)
 
     # SO
-    for dir in subs:
-        sub_dir = os.path.join(query_directory, dir)
-        sql_files = os.listdir(sub_dir)
+    elif dataset == 'so':
+        for dir in subs:
+            sub_dir = os.path.join(query_directory, dir)
+            sql_files = os.listdir(sub_dir)
 
-        for s_file in sql_files:
-            with open(os.path.join(sub_dir, s_file), 'r', encoding="utf8") as sql_file:
-                sql = sql_file.read()
-                queries.append(sql.strip())
+            for s_file in sql_files:
+                with open(os.path.join(sub_dir, s_file), 'r', encoding="utf8") as sql_file:
+                    lines = sql_file.readlines()
+                    sql = ''
+                    for l in lines:
+                        if l != '\n' and '--' not in l:
+                            sql += f' {l}'
+                    #sql = sql_file.read()
+                    sql = sql.strip().replace('\n', ' ')
+                    queries.append(sql)
+                    #queries.append(sql.strip().replace('\n', ' '))
 
-    #random.shuffle(queries)
-    #queries = queries[:100]
+    # Return the queries.
+    if shuffle:
+        random.shuffle(queries)
     return queries
 
-
-def query_worker(query_list, cursor):
-    # Run the queries.
-    for i in range(len(query_list)):
-        sql = query_list[i]
-        cursor.execute(sql)
-        print(os.getp)
-
+def connect(cfg):
+    conn = psycopg2.connect(
+        database=cfg['database'], user=cfg['user'],
+        password=cfg['password'], host=cfg['host'], port=int(cfg['port'])
+    )
+    conn.autocommit = True
+    cursor = conn.cursor()
+    cursor.execute("set enable_bao to on;")
+    #cursor.execute("set bao_host to \"localhost\";")
+    conn.commit()
+    return conn, cursor
 
 def run_queries(query_list, threads=2, increment=2):
     # Get the database config.
@@ -50,37 +69,30 @@ def run_queries(query_list, threads=2, increment=2):
     cfg = config['db']
 
     # Connect to the database.
-    conn = psycopg2.connect(
-        database=cfg['database'], user=cfg['user'],
-        password=cfg['password'], host=cfg['host'], port=int(cfg['port'])
-    )
-    conn.autocommit = True
-    cursor = conn.cursor()
-
-    # Enable Bao
-    cursor = conn.cursor()
-    cursor.execute("set enable_bao to on;")
-    #cursor.execute("set bao_host to \"localhost\";")
-    conn.commit()
-    #time.sleep(5)
+    conn, cursor = connect(cfg)
 
     # Cycle through and run all queries.
     print("Running queries...")
     start = time.time()
     for i in tqdm(range(len(query_list))):
         sql = query_list[i]
-        cursor.execute(sql)
-    """with multiprocessing.Pool(processes=threads) as pool:
-        chunks = [(query_list[i:i+increment], cfg) for i in range(0, 4, increment)]
-        result = pool.starmap(query_worker, chunks)"""
+        try:
+            cursor.execute(sql)
+        except:
+            print(sql)
+            conn, cursor = connect(cfg)
     print("Queries complete! Shutting down. Time: %ds" % (time.time()-start))
 
     # Close the database connection.
     conn.commit()
     time.sleep(5)
+    cursor.close()
     conn.close()
 
 
 if __name__ == '__main__':
-    query_list = build_query_list()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset', type=str, required=False, default='so', choices=['imdb-train', 'imdb-test', 'so'])
+    args = parser.parse_args()
+    query_list = build_query_list(args.dataset, shuffle=True)
     run_queries(query_list)

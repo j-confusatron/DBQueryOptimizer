@@ -6,7 +6,7 @@ import json
 class QueryHandler():
 
     def __init__(self):
-        self.model = model.Model('500_0.0001_32_lstm2x.pt')
+        self.model = model.Model('model.pt')
         self.obs_store = obs_store.ObservationStore()
 
     def select_plan(self, messages, debug=False):
