@@ -24,7 +24,7 @@ By using reinforcement learning techniques, the system is able to produce its ow
 - Tqdm
 
 ## Postgres Function Hook
-This project relies on prior work done on [https://dl.acm.org/doi/10.1145/3448016.3452838]Bao (Marcus, et al.) to integrate with Postgres. This is done by building a function hook, that intercepts query plan calls. Instructions on building and deploying the query hook are [https://rmarcus.info/bao_docs/tutorial/1_pg_setup.html]here.
+This project relies on prior work done on [Bao](https://dl.acm.org/doi/10.1145/3448016.3452838) (Marcus, et al.) to integrate with Postgres. This is done by building a function hook, that intercepts query plan calls. Instructions on building and deploying the query hook are [here](https://rmarcus.info/bao_docs/tutorial/1_pg_setup.html).
 
 ### Datasets
 This system was trained using a variation of the IMDB JOB dataset. The production pipeline will produce samples for any database with traffic.
