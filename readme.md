@@ -9,7 +9,7 @@ By using reinforcement learning techniques, the system is able to produce its ow
 
 ## Build Information
 
-### Build Environm,ent
+### Build Environment
 - Development: Windows 11 / Anaconda 4.10.3 / Python 3.8.13
 - Python Server + Database: Ubuntu 20.04.4 / Postgres 12.10 / Anaconda 4.10.3 / Python 3.8.13
 
