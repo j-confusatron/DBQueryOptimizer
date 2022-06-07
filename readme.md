@@ -28,3 +28,38 @@ This project relies on prior work done on [Bao](https://dl.acm.org/doi/10.1145/3
 
 ### Datasets
 This system was trained using a variation of the IMDB JOB dataset. The production pipeline will produce samples for any database with traffic.
+
+## Usage
+
+### Server
+The server is responsible for interacting with Postgres. Postgres will POST query plan candidates and observed costs to it. It records learning information for the training pipeline.
+
+#### Config server.cfg
+- server -> Port: Port to run server on
+- server -> ListenOn: 'localhost' or IP to host server on
+- model -> Epsilon: 0-1, likelihood that model will select a random plan
+- model -> ForceArm: 0-n, where n is number of candidate plans; force server to select plan at index; -1 to disable
+- buffer -> FlushAfter: Number of queries to predict before flushing training buffer to disk
+
+#### Run
+python server.py
+
+### Query Runner
+Run all queries against a Postgres instance.
+
+#### Config server.cfg
+- db -> database: The database to query
+- db -> user: db user name
+- db -> password: db password
+- db -> host: db host
+- db -> port: db port
+
+#### Run
+python query_runner.py
+- --dataset: One of: imdb-train, imdb-test, so
+
+### Training Pipeline
+Train a new model with the current training buffer.
+
+#### Run
+python train_model.py
