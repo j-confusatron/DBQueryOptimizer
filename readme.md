@@ -1,4 +1,6 @@
 # DB Query Plan Optimizer
+[Paper](https://github.com/j-confusatron/DBQueryOptimizer/blob/main/Learning%20a%20Query%20Plan%20Optimizer.pdf)
+
 Traditional database query planning uses dynamic programming to build cardinality estimations from the bottom up for query plan candidates. Cardinality estimates are just that, an estimate. Further, dynamic programming algorithms, such as Selinger's, break down as query complexity increases, requiring the databse engine to instead employ heuristics to make educated guesses.
 
 This project introduces an intelligent system that learns to predict the optimal query plan to execute. Two pipelines are used:
